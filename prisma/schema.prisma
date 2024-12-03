@@ -1,0 +1,134 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model cakes {
+  id            Int             @id @default(autoincrement())
+  cakes_name    String          @default("")
+  cakes_price   Float           @default(0) @db.Double
+  image         String          @default("")
+  best_before   DateTime        @default(now())
+  cakes_flavor  String          @default("")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+  compositions  compositions[]
+  detail_orders detail_orders[]
+}
+
+model materials {
+  id               Int                @id @default(autoincrement())
+  materials_name   String             @default("")
+  materials_price  Float              @default(0) @db.Double
+  materials_type   MaterialType
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now()) @updatedAt
+  compositions     compositions[]
+  detail_suppliers detail_suppliers[]
+}
+
+model compositions {
+  id               Int       @id @default(autoincrement())
+  cakes_id         Int       @default(0)
+  materials_id     Int       @default(0)
+  qty              Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  cakes_detail     cakes     @relation(fields: [cakes_id], references: [id])
+  materials_detail materials @relation(fields: [materials_id], references: [id])
+}
+
+model suppliers {
+  id                Int        @id @default(autoincrement())
+  suppliers_name    String     @default("")
+  suppliers_address String     @default("")
+  suppliers_phone   String     @default("") @db.VarChar(20)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @default(now()) @updatedAt
+  supplies          supplies[]
+}
+
+model supplies {
+  id               Int                @id @default(autoincrement())
+  supply_date      DateTime           @default(now())
+  supplier_id      Int                @default(0)
+  user_id          Int                @default(0)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now()) @updatedAt
+  suppliers_detail suppliers          @relation(fields: [supplier_id], references: [id])
+  user             users              @relation(fields: [user_id], references: [id])
+  detail_suppliers detail_suppliers[]
+}
+
+model detail_suppliers {
+  id               Int       @id @default(autoincrement())
+  supply_id        Int       @default(0)
+  materials_id     Int       @default(0)
+  materials_price  Float     @default(0) @db.Double
+  qty              Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
+  detail_supplies  supplies  @relation(fields: [supply_id], references: [id])
+  detail_materials materials @relation(fields: [materials_id], references: [id])
+}
+
+model orders {
+  id            Int             @id @default(autoincrement())
+  order_date    DateTime        @default(now())
+  user_id       Int             @default(0)
+  status        StatusType
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+  users_detail  users           @relation(fields: [user_id], references: [id])
+  detail_orders detail_orders[]
+}
+
+model detail_orders {
+  id             Int      @id @default(autoincrement())
+  order_id       Int      @default(0)
+  cakes_id       Int      @default(0)
+  cake_price     Float    @default(0) @db.Double
+  qty            Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+  cakes_details  cakes    @relation(fields: [cakes_id], references: [id])
+  orders_details orders   @relation(fields: [order_id], references: [id])
+}
+
+model users {
+  id            Int        @id @default(autoincrement())
+  user_name     String     @default("")
+  user_email    String     @unique @default("")
+  user_password String     @default("")
+  user_role     UserType
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @default(now()) @updatedAt
+  orders        orders[]
+  supplies      supplies[]
+}
+
+enum MaterialType {
+  Powder
+  Liquid
+  Solid
+}
+
+enum StatusType {
+  Process
+  Deliverer
+}
+
+enum UserType {
+  Admin
+  Cashier
+}
